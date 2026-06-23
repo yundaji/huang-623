@@ -3,7 +3,8 @@ BOT_TOKEN = "8970432708:AAHbdyqeDCM57p9ljmkzyYa0DBaIiyTyqR4"
 CHANNELS = [
     "@douzi25",
     "@bdzgbhdg",
-    "@sanji255"
+    "@sanji255",
+    "@mamaoo8",
 ]
 
 DAILY_COUNT = 2
