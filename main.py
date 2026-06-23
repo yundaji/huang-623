@@ -33,7 +33,7 @@ def main():
             sent[channel] = []
             unsent = pool
 
-        # ✅ 顺序发布
+        # ✔ 顺序发送
         selected = unsent[:DAILY_COUNT]
 
         albums = {}
@@ -49,7 +49,7 @@ def main():
             else:
                 singles.append(m["id"])
 
-        # 📤 先发相册（不会拆）
+        # 📤 相册（不会拆）
         for gid, ids in albums.items():
 
             ids = sorted(ids)
@@ -59,10 +59,10 @@ def main():
             for i in ids:
                 sent.setdefault(channel, []).append(str(i))
 
-        # 📤 再发单条
+        # 📤 单条（已修复 crash）
         for mid in singles:
 
-            send_single(channel, mid)
+            send_single(channel, mid, channel)
 
             sent.setdefault(channel, []).append(str(mid))
 
