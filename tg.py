@@ -2,22 +2,35 @@ import requests
 from config import BOT_TOKEN
 
 
-def copy_post(chat_id, from_chat_id, message_id):
+# ✔ 单条消息（文字 / 图片 / 视频）
+def send_single(chat_id, from_chat_id, message_id):
+
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/copyMessage"
 
-    payload = {
+    r = requests.post(url, data={
         "chat_id": chat_id,
         "from_chat_id": from_chat_id,
         "message_id": message_id
-    }
+    })
 
-    r = requests.post(url, data=payload)
-
-    # ✅ 加调试（非常关键）
     try:
-        result = r.json()
-        print("COPY RESULT:", result)
-    except Exception:
-        print("COPY FAILED:", r.text)
+        return r.json().get("ok", False)
+    except:
+        return False
 
-    return r
+
+# ✔ 图集 / 视频组（核心）
+def send_group(chat_id, from_chat_id, message_ids):
+
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/forwardMessages"
+
+    r = requests.post(url, data={
+        "chat_id": chat_id,
+        "from_chat_id": from_chat_id,
+        "message_ids": message_ids
+    })
+
+    try:
+        return r.json().get("ok", False)
+    except:
+        return False
