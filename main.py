@@ -27,10 +27,10 @@ def main():
 
         sent_ids = set(sent.get(channel, []))
 
-        # ✔ 去重
+        # ✔ 去重（昨天发过今天不发）
         unsent = [m for m in pool if str(m["id"]) not in sent_ids]
 
-        # ✔ 不够就重置循环
+        # ✔ 不够则循环
         if len(unsent) < DAILY_COUNT:
             sent[channel] = []
             unsent = pool
@@ -38,10 +38,10 @@ def main():
         # ✔ 顺序发布
         selected = unsent[:DAILY_COUNT]
 
-        # 📦 关键：按 grouped_id 合并媒体组
         albums = {}
         singles = []
 
+        # 📦 按 grouped_id 合并
         for m in selected:
 
             gid = m.get("group")
@@ -51,20 +51,20 @@ def main():
             else:
                 singles.append(m["id"])
 
-        # 📤 先发“相册/视频组”（不会拆）
+        # 📤 先发相册（不拆图/视频）
         for gid, ids in albums.items():
 
             ids = sorted(ids)
 
-            send_media_group(channel, ids)
+            send_media_group(channel, ids, channel)
 
             for i in ids:
                 sent.setdefault(channel, []).append(str(i))
 
-        # 📤 单条消息（如果有）
+        # 📤 单条（也用媒体组方式兜底）
         for mid in singles:
 
-            send_media_group(channel, [mid])
+            send_media_group(channel, [mid], channel)
 
             sent.setdefault(channel, []).append(str(mid))
 
