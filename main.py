@@ -1,6 +1,6 @@
 import json
 from config import CHANNELS, DAILY_COUNT
-from tg import send_group, send_single
+from tg import copy_post
 
 
 def load(file, default):
@@ -13,7 +13,7 @@ def load(file, default):
 
 def save(file, data):
     with open(file, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        json.dump(data, f, ensure_ascii=False)
 
 
 def main():
@@ -21,74 +21,36 @@ def main():
     data = load("data.json", {})
     sent = load("sent.json", {})
 
-    print("📦 CHANNELS:", CHANNELS)
-    print("📦 DAILY_COUNT:", DAILY_COUNT)
-
-    channel_index = 0
-
     for channel in CHANNELS:
 
         pool = data.get(channel, [])
 
-        print(f"\n📌 频道: {channel}")
-        print(f"📦 内容总数: {len(pool)}")
-
-        if not pool:
-            continue
-
         sent_ids = set(sent.get(channel, []))
 
-        unsent = []
+        # ✔ 去重（昨天发过的不再发）
+        unsent = [m for m in pool if str(m["id"]) not in sent_ids]
 
-        # ✔ 去重逻辑（支持 album）
-        for item in pool:
-            if item["type"] == "album":
-                key = f"album:{item['message_ids'][0]}"
-            else:
-                key = f"msg:{item['message_id']}"
-
-            if key not in sent_ids:
-                unsent.append(item)
-
-        # ✔ 不够则重置
+        # ✔ 不够则重置循环
         if len(unsent) < DAILY_COUNT:
-            print("♻️ 重置去重记录")
             sent[channel] = []
             unsent = pool
 
+        # ✔ 顺序发布（不是随机）
         selected = unsent[:DAILY_COUNT]
 
-        print(f"📤 本次发送: {len(selected)}")
+        # 📤 逐条原样复制（包括：图+视频+文本整体）
+        for m in selected:
 
-        for item in selected:
+            copy_post(
+                channel,      # 发到哪个频道
+                channel,      # 从哪个频道复制（同源）
+                m["id"]       # 消息ID
+            )
 
-            # 🔥 album（图集 / 视频组）
-            if item["type"] == "album":
-
-                print("🖼 发送图集:", item["message_ids"])
-
-                ok = send_group(channel, channel, item["message_ids"])
-
-                if ok:
-                    sent.setdefault(channel, []).append(
-                        f"album:{item['message_ids'][0]}"
-                    )
-
-            # 🔥 单条
-            else:
-
-                print("📄 发送单条:", item["message_id"])
-
-                ok = send_single(channel, channel, item["message_id"])
-
-                if ok:
-                    sent.setdefault(channel, []).append(
-                        f"msg:{item['message_id']}"
-                    )
+            # ✔ 记录已发送
+            sent.setdefault(channel, []).append(str(m["id"]))
 
         save("sent.json", sent)
-
-    print("\n✅ 完成运行")
 
 
 if __name__ == "__main__":
