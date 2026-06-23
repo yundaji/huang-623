@@ -1,27 +1,14 @@
-from telethon.sync import TelegramClient
-from config import API_ID, API_HASH
+import requests
+from config import BOT_TOKEN
 
-client = TelegramClient("session", API_ID, API_HASH)
+def send_message(chat_id, message_id, from_chat):
 
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/copyMessage"
 
-# 📦 发送完整“相册/视频组”（不会拆）
-def send_media_group(chat_id, message_ids, from_chat):
+    data = {
+        "chat_id": chat_id,
+        "from_chat_id": from_chat,
+        "message_id": message_id
+    }
 
-    with client:
-
-        # ✔ 关键：先把 message_id 转成 Telegram Message 对象
-        msgs = client.get_messages(from_chat, ids=message_ids)
-
-        # 单个转 list
-        if not isinstance(msgs, list):
-            msgs = [msgs]
-
-        # 过滤空值
-        msgs = [m for m in msgs if m]
-
-        # ✔ 发送媒体组（核心）
-        client.send_file(
-            chat_id,
-            msgs,
-            grouped=True
-        )
+    requests.post(url, data=data)
