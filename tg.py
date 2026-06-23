@@ -4,8 +4,8 @@ from config import API_ID, API_HASH
 client = TelegramClient("session", API_ID, API_HASH)
 
 
-# 📦 媒体组（图片+视频一起，不拆）
-def send_media_group(chat_id, message_ids):
+# 📦 相册（图 + 视频不拆）
+def send_album(chat_id, message_ids):
 
     with client:
 
@@ -16,7 +16,7 @@ def send_media_group(chat_id, message_ids):
         )
 
 
-# 📤 单条
+# 📤 单条（转发）
 def send_single(chat_id, message_id, from_chat):
 
     with client:
