@@ -1,5 +1,6 @@
 from telethon.sync import TelegramClient
 import json
+import os
 from collections import defaultdict
 
 from config import CHANNELS, POOL_LIMIT, API_ID, API_HASH
@@ -9,13 +10,20 @@ client = TelegramClient("session", API_ID, API_HASH)
 
 def build_pool():
 
+    # =========================
+    # 🚀 强制清理旧数据（关键）
+    # =========================
+    if os.path.exists("data.json"):
+        os.remove("data.json")
+        print("🧹 已删除旧 data.json")
+
     data = {}
 
     with client:
 
         for channel in CHANNELS:
 
-            print("抓取频道:", channel)
+            print(f"\n抓取频道: {channel}")
 
             msgs = []
 
@@ -33,7 +41,7 @@ def build_pool():
                 })
 
             # =========================
-            # ⭐⭐⭐ 核心改造就在这里
+            # 🚀 结构重建（single + album）
             # =========================
 
             grouped = defaultdict(list)
@@ -65,10 +73,15 @@ def build_pool():
 
             data[channel] = final_pool
 
+            print(f"📦 已生成: {len(final_pool)} 条结构化内容")
+
+    # =========================
+    # 🚀 写入全新 data.json
+    # =========================
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-    print("✅ data.json 已生成（已结构化 single + album）")
+    print("\n✅ data.json 已全量重建完成（无旧结构污染）")
 
 
 if __name__ == "__main__":
