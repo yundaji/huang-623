@@ -1,6 +1,6 @@
 import json
 from config import CHANNELS, DAILY_COUNT
-from tg import copy_post
+from tg import send_group, send_single
 
 
 def load(file, default):
@@ -24,27 +24,35 @@ def main():
     print("📦 CHANNELS:", CHANNELS)
     print("📦 DAILY_COUNT:", DAILY_COUNT)
 
+    channel_index = 0
+
     for channel in CHANNELS:
 
         pool = data.get(channel, [])
 
         print(f"\n📌 频道: {channel}")
-        print(f"📦 总内容: {len(pool)}")
+        print(f"📦 内容总数: {len(pool)}")
 
         if not pool:
-            print("⚠️ 该频道没有数据")
             continue
 
         sent_ids = set(sent.get(channel, []))
 
-        # ✔ 去重
-        unsent = [m for m in pool if str(m["id"]) not in sent_ids]
+        unsent = []
 
-        print(f"🟡 未发送数量: {len(unsent)}")
+        # ✔ 去重逻辑（支持 album）
+        for item in pool:
+            if item["type"] == "album":
+                key = f"album:{item['message_ids'][0]}"
+            else:
+                key = f"msg:{item['message_id']}"
+
+            if key not in sent_ids:
+                unsent.append(item)
 
         # ✔ 不够则重置
         if len(unsent) < DAILY_COUNT:
-            print("♻️ 重置已发送记录")
+            print("♻️ 重置去重记录")
             sent[channel] = []
             unsent = pool
 
@@ -52,27 +60,31 @@ def main():
 
         print(f"📤 本次发送: {len(selected)}")
 
-        for m in selected:
+        for item in selected:
 
-            msg_id = m["id"]
+            # 🔥 album（图集 / 视频组）
+            if item["type"] == "album":
 
-            print(f"➡️ 发送 message_id={msg_id}")
+                print("🖼 发送图集:", item["message_ids"])
 
-            res = copy_post(
-                chat_id=channel,
-                from_chat_id=channel,
-                message_id=msg_id
-            )
+                ok = send_group(channel, channel, item["message_ids"])
 
-            # ❗ Telegram失败检测
-            try:
-                if not res.json().get("ok"):
-                    print("❌ 发送失败:", res.text)
-                    continue
-            except:
-                pass
+                if ok:
+                    sent.setdefault(channel, []).append(
+                        f"album:{item['message_ids'][0]}"
+                    )
 
-            sent.setdefault(channel, []).append(str(msg_id))
+            # 🔥 单条
+            else:
+
+                print("📄 发送单条:", item["message_id"])
+
+                ok = send_single(channel, channel, item["message_id"])
+
+                if ok:
+                    sent.setdefault(channel, []).append(
+                        f"msg:{item['message_id']}"
+                    )
 
         save("sent.json", sent)
 
