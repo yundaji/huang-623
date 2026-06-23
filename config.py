@@ -6,7 +6,7 @@ CHANNELS = [
     "@sanji255"
 ]
 
-DAILY_COUNT = 5
+DAILY_COUNT = 2
 POOL_LIMIT = 300
 
 # Telegram API（只用于抓历史）
