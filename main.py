@@ -1,6 +1,6 @@
 import json
 from config import CHANNELS, DAILY_COUNT
-from tg import copy_post
+from tg import send_media_group
 
 
 def load(file, default):
@@ -27,28 +27,46 @@ def main():
 
         sent_ids = set(sent.get(channel, []))
 
-        # ✔ 去重（昨天发过的不再发）
+        # ✔ 去重
         unsent = [m for m in pool if str(m["id"]) not in sent_ids]
 
-        # ✔ 不够则重置循环
+        # ✔ 不够就重置循环
         if len(unsent) < DAILY_COUNT:
             sent[channel] = []
             unsent = pool
 
-        # ✔ 顺序发布（不是随机）
+        # ✔ 顺序发布
         selected = unsent[:DAILY_COUNT]
 
-        # 📤 逐条原样复制（包括：图+视频+文本整体）
+        # 📦 关键：按 grouped_id 合并媒体组
+        albums = {}
+        singles = []
+
         for m in selected:
 
-            copy_post(
-                channel,      # 发到哪个频道
-                channel,      # 从哪个频道复制（同源）
-                m["id"]       # 消息ID
-            )
+            gid = m.get("group")
 
-            # ✔ 记录已发送
-            sent.setdefault(channel, []).append(str(m["id"]))
+            if gid:
+                albums.setdefault(gid, []).append(m["id"])
+            else:
+                singles.append(m["id"])
+
+        # 📤 先发“相册/视频组”（不会拆）
+        for gid, ids in albums.items():
+
+            ids = sorted(ids)
+
+            send_media_group(channel, ids)
+
+            for i in ids:
+                sent.setdefault(channel, []).append(str(i))
+
+        # 📤 单条消息（如果有）
+        for mid in singles:
+
+            send_media_group(channel, [mid])
+
+            sent.setdefault(channel, []).append(str(mid))
 
         save("sent.json", sent)
 
