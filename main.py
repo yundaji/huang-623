@@ -25,25 +25,21 @@ def main():
 
         pool = data.get(channel, [])
 
-        # 已发送ID
         sent_ids = set(sent.get(channel, []))
 
-        # 未发送内容（去重）
         unsent = [m for m in pool if str(m["id"]) not in sent_ids]
 
-        # 如果不够 → 重置循环
         if len(unsent) < DAILY_COUNT:
             sent[channel] = []
-            sent_ids = set()
             unsent = pool
 
-        # ✅ 顺序发布（关键修改点）
+        # ✅ 顺序发布
         selected = unsent[:DAILY_COUNT]
 
         albums = {}
         singles = []
 
-        # 分类：相册 / 单条
+        # 📦 分组（相册 / 单条）
         for m in selected:
 
             gid = m.get("group")
@@ -53,25 +49,23 @@ def main():
             else:
                 singles.append(m["id"])
 
-        # 📤 先发相册（保持顺序）
+        # 📤 先发相册（不会拆）
         for gid, ids in albums.items():
 
-            # 保证相册内部顺序
             ids = sorted(ids)
 
-            send_album(channel, ids, channel)
+            send_album(channel, ids)
 
             for i in ids:
                 sent.setdefault(channel, []).append(str(i))
 
-        # 📤 再发单条（顺序）
+        # 📤 再发单条
         for mid in singles:
 
-            send_single(channel, mid, channel)
+            send_single(channel, mid)
 
             sent.setdefault(channel, []).append(str(mid))
 
-        # 保存记录
         save("sent.json", sent)
 
 
