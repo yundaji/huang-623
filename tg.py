@@ -1,16 +1,16 @@
-import requests
-from config import BOT_TOKEN
+from telethon.sync import TelegramClient
+from config import API_ID, API_HASH
+
+client = TelegramClient("session", API_ID, API_HASH)
 
 
-# ✔ 原样复制帖子（不显示转发，不拆图，不拆视频）
-def copy_post(chat_id, from_chat_id, message_id):
+# 📦 发送“完整媒体组”（图片+视频不拆）
+def send_media_group(chat_id, message_ids):
 
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/copyMessage"
+    with client:
 
-    payload = {
-        "chat_id": chat_id,
-        "from_chat_id": from_chat_id,
-        "message_id": message_id
-    }
-
-    requests.post(url, data=payload)
+        client.send_file(
+            chat_id,
+            message_ids,
+            grouped=True   # ⭐关键：自动合并成一个帖子
+        )
