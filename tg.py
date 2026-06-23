@@ -1,28 +1,16 @@
-from telethon.sync import TelegramClient
-from config import API_ID, API_HASH
-
-client = TelegramClient("session", API_ID, API_HASH)
+import requests
+from config import BOT_TOKEN
 
 
-# 📦 相册（图 + 视频不拆）
-def send_album(chat_id, message_ids):
+# ✔ 原样复制帖子（不显示转发，不拆图，不拆视频）
+def copy_post(chat_id, from_chat_id, message_id):
 
-    with client:
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/copyMessage"
 
-        client.send_file(
-            chat_id,
-            message_ids,
-            grouped=True   # ⭐关键：保持原帖结构
-        )
+    payload = {
+        "chat_id": chat_id,
+        "from_chat_id": from_chat_id,
+        "message_id": message_id
+    }
 
-
-# 📤 单条（转发）
-def send_single(chat_id, message_id, from_chat):
-
-    with client:
-
-        client.forward_messages(
-            chat_id,
-            message_id,
-            from_chat
-        )
+    requests.post(url, data=payload)
