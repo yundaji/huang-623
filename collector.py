@@ -1,9 +1,6 @@
 from telethon.sync import TelegramClient
 import json
-from config import CHANNELS, POOL_LIMIT
-
-API_ID = 37199356   # 你去 https://my.telegram.org 获取
-API_HASH = "d9156458a8520ad1d227f14c43ee19e7"
+from config import CHANNELS, POOL_LIMIT, API_ID, API_HASH
 
 client = TelegramClient("session", API_ID, API_HASH)
 
@@ -16,7 +13,7 @@ def build_pool():
 
         for channel in CHANNELS:
 
-            print("抓取频道:", channel)
+            print("抓取:", channel)
 
             msgs = []
 
@@ -29,7 +26,8 @@ def build_pool():
                     continue
 
                 msgs.append({
-                    "id": msg.id
+                    "id": msg.id,
+                    "group": str(msg.grouped_id) if msg.grouped_id else None
                 })
 
             data[channel] = msgs
@@ -37,7 +35,7 @@ def build_pool():
     with open("data.json", "w") as f:
         json.dump(data, f)
 
-    print("完成：data.json 已生成")
+    print("data.json 已生成")
 
 
 if __name__ == "__main__":
