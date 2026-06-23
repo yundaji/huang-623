@@ -1,7 +1,8 @@
 import json
 import random
 from config import CHANNELS, DAILY_COUNT
-from tg import send_message
+from tg import send_single, send_album
+
 
 def load(file, default):
     try:
@@ -35,11 +36,27 @@ def main():
 
         selected = random.sample(unsent, DAILY_COUNT)
 
-        for msg in selected:
+        albums = {}
+        singles = []
 
-            send_message(channel, msg["id"], channel)
+        # 🔥 相册 & 单图分类
+        for m in selected:
 
-            sent.setdefault(channel, []).append(str(msg["id"]))
+            if m.get("group"):
+                albums.setdefault(m["group"], []).append(m["id"])
+            else:
+                singles.append(m["id"])
+
+        # 📤 发相册（不拆图）
+        for gid, ids in albums.items():
+            send_album(channel, ids, channel)
+            for i in ids:
+                sent.setdefault(channel, []).append(str(i))
+
+        # 📤 发单图
+        for mid in singles:
+            send_single(channel, mid, channel)
+            sent.setdefault(channel, []).append(str(mid))
 
         save("sent.json", sent)
 
