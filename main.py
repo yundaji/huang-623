@@ -1,6 +1,6 @@
 import json
 from config import CHANNELS, DAILY_COUNT
-from tg import send_single, send_album
+from tg import send_single, send_media_group
 
 
 def load(file, default):
@@ -39,27 +39,29 @@ def main():
         albums = {}
         singles = []
 
-        # 📦 分组（相册 / 单条）
+        # 📦 分组（媒体组 / 单条）
         for m in selected:
 
             gid = m.get("group")
 
             if gid:
-                albums.setdefault(gid, []).append(m["id"])
+                if gid not in albums:
+                    albums[gid] = []
+                albums[gid].append(m["id"])
             else:
                 singles.append(m["id"])
 
-        # 📤 相册（不会拆）
+        # 📤 先发媒体组（不会拆）
         for gid, ids in albums.items():
 
             ids = sorted(ids)
 
-            send_album(channel, ids)
+            send_media_group(channel, ids)
 
             for i in ids:
                 sent.setdefault(channel, []).append(str(i))
 
-        # 📤 单条（已修复 crash）
+        # 📤 再发单条
         for mid in singles:
 
             send_single(channel, mid, channel)
