@@ -13,11 +13,12 @@ def build_pool():
 
         for channel in CHANNELS:
 
-            print("抓取:", channel)
+            print("抓取频道:", channel)
 
             msgs = []
 
-            for msg in client.iter_messages(channel, limit=POOL_LIMIT):
+            # ✔ 按时间顺序（旧 → 新）
+            for msg in client.iter_messages(channel, limit=POOL_LIMIT, reverse=True):
 
                 if not msg:
                     continue
@@ -27,15 +28,16 @@ def build_pool():
 
                 msgs.append({
                     "id": msg.id,
-                    "group": str(msg.grouped_id) if msg.grouped_id else None
+                    "group": str(msg.grouped_id) if msg.grouped_id else None,
+                    "date": msg.date.timestamp()
                 })
 
             data[channel] = msgs
 
-    with open("data.json", "w") as f:
-        json.dump(data, f)
+    with open("data.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
 
-    print("data.json 已生成")
+    print("✅ data.json 已生成")
 
 
 if __name__ == "__main__":
