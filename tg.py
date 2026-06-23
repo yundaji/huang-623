@@ -16,3 +16,13 @@ def send_album(chat_id, message_ids):
         )
 
 
+# 📤 单条（转发）
+def send_single(chat_id, message_id, from_chat):
+
+    with client:
+
+        client.forward_messages(
+            chat_id,
+            message_id,
+            from_chat
+        )
